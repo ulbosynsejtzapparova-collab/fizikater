@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Физика Платформа — Тербелмелі қозғалыс</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0f1a;--bg2:#131629;--card:#1a1e35;--card2:#1f2442;
+  --accent:#5b8cff;--accent2:#ff6b9d;--accent3:#43e97b;--accent4:#f9ca24;
+  --text:#e8ecff;--muted:#8892b0;--border:#2a3060;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;overflow-x:hidden}
+
+/* SCREENS */
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+
+/* ===== AUTH ===== */
+#authScreen{
+  display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:radial-gradient(ellipse at 50% 0%,rgba(91,140,255,0.18),transparent 60%),var(--bg);
+}
+.auth-box{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:24px;padding:48px 40px;width:100%;max-width:440px;
+  box-shadow:0 24px 80px rgba(0,0,0,0.5);text-align:center;
+}
+.auth-logo{font-size:3.5rem;margin-bottom:8px}
+.auth-title{font-family:'Baloo 2',cursive;font-size:2rem;font-weight:800;
+  background:linear-gradient(135deg,#5b8cff,#ff6b9d);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.auth-sub{color:var(--muted);font-size:0.88rem;margin-bottom:28px}
+.role-tabs{display:flex;gap:8px;margin-bottom:24px}
+.role-tab{flex:1;padding:10px;border-radius:10px;border:2px solid var(--border);
+  background:transparent;color:var(--muted);font-weight:700;cursor:pointer;
+  font-family:inherit;font-size:0.9rem;transition:all 0.2s}
+.role-tab.active{border-color:var(--accent);background:rgba(91,140,255,0.12);color:var(--accent)}
+.inp{width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 16px;color:var(--text);
+  font-family:inherit;font-size:0.95rem;margin-bottom:12px;outline:none;transition:border 0.2s}
+.inp:focus{border-color:var(--accent)}
+.btn-primary{width:100%;background:linear-gradient(135deg,#5b8cff,#7b5ea7);
+  border:none;border-radius:12px;padding:14px;color:#fff;
+  font-family:inherit;font-size:1rem;font-weight:800;cursor:pointer;transition:opacity 0.2s}
+.btn-primary:hover{opacity:0.85}
+.auth-err{color:var(--accent2);font-size:0.85rem;margin-top:8px;min-height:20px}
+.auth-hint{color:var(--muted);font-size:0.8rem;margin-top:14px;line-height:1.6}
+.auth-hint strong{color:var(--accent4)}
+
+/* ===== TIMER BAR ===== */
+#timerBar{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  background:rgba(19,22,41,0.97);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:6px 16px;display:none;align-items:center;gap:12px;
+}
+.t-clock{font-family:'Baloo 2',cursive;font-size:1.3rem;font-weight:800;color:var(--accent3);min-width:70px}
+.t-clock.warn{color:var(--accent4)}
+.t-clock.danger{color:var(--accent2);animation:blink .5s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+.t-prog{flex:1;height:7px;background:var(--bg2);border-radius:4px;overflow:hidden}
+.t-fill{height:100%;background:linear-gradient(90deg,var(--accent3),var(--accent4));border-radius:4px;transition:width .5s,background .5s}
+.t-pill{background:var(--bg2);border:1px solid var(--border);padding:4px 12px;border-radius:16px;font-size:12px;font-weight:700;white-space:nowrap}
+.t-pill span{color:var(--accent4)}
+.t-user{color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap}
+.t-out-btn{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:4px 10px;border-radius:7px;cursor:pointer;font-size:11px;font-family:inherit;white-space:nowrap}
+.t-out-btn:hover{border-color:var(--accent2);color:var(--accent2)}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--accent3);color:#000;padding:12px 24px;border-radius:12px;
+  font-weight:800;font-size:0.95rem;z-index:9999;transition:transform .3s;pointer-events:none;
+  white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ===== LESSON NAV ===== */
+#mainNav{
+  background:rgba(13,15,26,0.95);backdrop-filter:blur(10px);
+  position:sticky;top:44px;z-index:99;
+  border-bottom:1px solid var(--border);padding:0 16px;display:none;
+}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;
+  gap:2px;justify-content:center;padding:6px 0}
+nav a{color:var(--muted);text-decoration:none;padding:7px 12px;
+  border-radius:7px;font-size:11px;font-weight:700;transition:all .2s;white-space:nowrap}
+nav a:hover{background:var(--card);color:var(--accent)}
+nav a.active{background:var(--accent);color:#fff}
+
+/* CONTAINER */
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+section.ls{padding:48px 0}
+.s-title{font-family:'Baloo 2',cursive;font-size:clamp(1.5rem,3vw,2.1rem);font-weight:800;margin-bottom:6px}
+.s-title .hl{color:var(--accent)}
+.s-sub{color:var(--muted);font-size:0.9rem;margin-bottom:28px}
+.pts-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(249,202,36,.1);
+  border:1px solid rgba(249,202,36,.3);border-radius:16px;padding:4px 14px;
+  font-size:12px;font-weight:800;color:var(--accent4);margin-bottom:20px}
+
+/* ===== LESSON HEADER ===== */
+.lesson-header{
+  background:linear-gradient(135deg,#0d0f1a,#1a1e35,#0f1628);
+  text-align:center;padding:50px 20px 60px;
+  border-bottom:2px solid var(--border);position:relative;overflow:hidden;margin-top:44px;
+}
+.lesson-header::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50%,rgba(91,140,255,.12),transparent 65%)}
+.h-tag{display:inline-block;background:rgba(91,140,255,.15);border:1px solid rgba(91,140,255,.4);
+  color:var(--accent);padding:5px 14px;border-radius:28px;font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.lesson-header h1{font-family:'Baloo 2',cursive;font-size:clamp(1.9rem,5vw,3.2rem);font-weight:800;
+  background:linear-gradient(135deg,#5b8cff,#ff6b9d,#43e97b);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  position:relative;z-index:1;margin-bottom:8px}
+.lesson-header p{color:var(--muted);font-size:.9rem;position:relative;z-index:1}
+.meta-badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;position:relative;z-index:1;margin-top:14px}
+.badge{background:var(--card);border:1px solid var(--border);padding:4px 12px;border-radius:16px;font-size:11px;font-weight:600}
+.badge span{color:var(--accent)}
+
+/* CARDS */
+.concepts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.concept-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;
+  position:relative;overflow:hidden;transition:transform .3s}
+.concept-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--cc,var(--accent))}
+.concept-card:hover{transform:translateY(-3px)}
+.concept-icon{font-size:2rem;margin-bottom:8px}
+.concept-card h3{font-size:.95rem;font-weight:800;margin-bottom:5px}
+.concept-card p{color:var(--muted);font-size:.82rem;line-height:1.6}
+.concept-formula{margin-top:8px;background:rgba(91,140,255,.1);border:1px solid rgba(91,140,255,.2);
+  border-radius:6px;padding:5px 10px;font-family:monospace;font-size:.88rem;color:var(--accent);text-align:center}
+
+/* LECTURE */
+.lecture-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:14px}
+.lecture-box h3{font-size:1rem;font-weight:800;margin-bottom:10px;color:var(--accent)}
+.lecture-box p{color:var(--muted);line-height:1.8;font-size:.88rem;margin-bottom:8px}
+.note-area{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:12px;color:var(--text);font-family:inherit;font-size:.88rem;
+  resize:vertical;min-height:85px;outline:none;transition:border .2s}
+.note-area:focus{border-color:var(--accent)}
+.save-btn{background:var(--accent);border:none;border-radius:8px;padding:8px 18px;color:#fff;
+  font-family:inherit;font-weight:800;cursor:pointer;font-size:12px;transition:opacity .2s;margin-top:8px}
+.save-btn:hover{opacity:.85}
+.saved-ok{color:var(--accent3);font-size:12px;font-weight:700;margin-left:10px;display:none}
+
+/* ANIMATIONS */
+#anim-sec{background:var(--bg2)}
+.anim-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:640px){.anim-grid{grid-template-columns:1fr}}
+.anim-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+.anim-box h3{margin-bottom:14px;font-size:.95rem;font-weight:800}
+canvas{border-radius:8px;background:#0a0c18;max-width:100%}
+.ctrl-btn{background:var(--card2);border:1px solid var(--border);color:var(--text);
+  padding:5px 12px;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;
+  transition:all .2s;font-family:inherit}
+.ctrl-btn:hover,.ctrl-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sl-row{display:flex;align-items:center;gap:8px;margin-top:8px;justify-content:center;flex-wrap:wrap}
+.sl-row label{font-size:11px;color:var(--muted);white-space:nowrap}
+input[type=range]{accent-color:var(--accent);cursor:pointer;width:90px}
+.sl-val{color:var(--accent);font-weight:800;font-size:11px;min-width:26px}
+
+/* FORMULAS */
+.formulas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+.formula-card{background:var(--card);border:1px solid var(--border);border-radius:13px;overflow:hidden}
+.formula-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.f-num{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:.85rem;flex-shrink:0}
+.formula-header h3{font-size:.88rem;font-weight:800}
+.formula-body{padding:16px 18px}
+.f-box{border-radius:9px;padding:12px;text-align:center;margin-bottom:12px}
+.f-big{font-size:1.3rem;font-family:'Courier New',monospace;font-weight:700}
+.f-vars{font-size:.78rem;color:var(--muted);margin-top:5px;line-height:1.6}
+.task-box{background:rgba(67,233,123,.05);border:1px solid rgba(67,233,123,.2);border-radius:8px;padding:12px;margin-top:10px}
+.task-lbl{font-size:10px;font-weight:800;color:var(--accent3);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.q-opts-f{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.q-opt-f{background:var(--bg2);border:2px solid var(--border);border-radius:8px;
+  padding:9px 14px;cursor:pointer;font-size:.85rem;font-weight:600;
+  transition:all .2s;display:flex;align-items:center;gap:8px;font-family:inherit;color:var(--text)}
+.q-opt-f:hover:not(:disabled){border-color:var(--accent);background:rgba(91,140,255,.06)}
+.q-opt-f.correct{border-color:var(--accent3);background:rgba(67,233,123,.08);color:var(--accent3)}
+.q-opt-f.wrong{border-color:var(--accent2);background:rgba(255,107,157,.08);color:var(--accent2)}
+.opt-l{width:24px;height:24px;background:var(--card);border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-weight:900;font-size:.75rem;flex-shrink:0}
+.f-feedback{display:none;margin-top:8px;padding:9px;border-radius:7px;font-size:.8rem;line-height:1.5}
+.f-feedback.show{display:block}
+.f-feedback.ok{background:rgba(67,233,123,.08);border:1px solid rgba(67,233,123,.22);color:var(--accent3)}
+.f-feedback.fail{background:rgba(255,107,157,.08);border:1px solid rgba(255,107,157,.22);color:var(--accent2)}
+.written-task{background:rgba(249,202,36,.05);border:1px solid rgba(249,202,36,.22);border-radius:8px;padding:12px;margin-top:8px}
+.w-lbl{font-size:10px;font-weight:800;color:var(--accent4);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.w-given{background:rgba(255,255,255,.03);border-radius:6px;padding:7px 10px;margin-bottom:7px;font-size:.8rem}
+.w-given span{color:var(--accent4);font-weight:700}
+.w-inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:7px;
+  padding:9px 12px;color:var(--text);font-family:inherit;font-size:.85rem;
+  resize:vertical;min-height:65px;outline:none;transition:border .2s}
+.w-inp:focus{border-color:var(--accent4)}
+.w-btn{background:var(--accent4);border:none;border-radius:7px;padding:7px 16px;
+  color:#000;font-family:inherit;font-weight:800;cursor:pointer;font-size:11px;
+  margin-top:6px;transition:opacity .2s}
+.w-btn:hover{opacity:.85}
+.w-fb{margin-top:7px;font-size:.8rem;padding:8px;border-radius:6px;display:none}
+.w-fb.ok{background:rgba(67,233,123,.1);color:var(--accent3);display:block}
+.w-fb.partial{background:rgba(249,202,36,.1);color:var(--accent4);display:block}
+.w-fb.fail{background:rgba(255,107,157,.1);color:var(--accent2);display:block}
+
+/* DAILY */
+.daily-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.daily-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:transform .3s;cursor:pointer}
+.daily-card:hover{transform:translateY(-5px)}
+.d-anim{height:130px;display:flex;align-items:center;justify-content:center;font-size:3rem}
+.d-info{padding:12px}
+.d-info h3{font-size:.9rem;font-weight:800;margin-bottom:4px}
+.d-info p{font-size:.78rem;color:var(--muted);line-height:1.5}
+.swing{animation:swing 2s ease-in-out infinite;display:inline-block;transform-origin:top center}
+@keyframes swing{0%,100%{transform:rotate(-30deg)}50%{transform:rotate(30deg)}}
+.bounce{animation:bounce 1s ease-in-out infinite;display:inline-block}
+@keyframes bounce{0%,100%{transform:translateY(-15px)}50%{transform:translateY(15px)}}
+.vibrate{animation:vibrate .3s linear infinite;display:inline-block}
+@keyframes vibrate{0%,100%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
+.heartbeat{animation:heartbeat .8s ease-in-out infinite;display:inline-block}
+@keyframes heartbeat{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.wave-anim{animation:wave-move 3s ease-in-out infinite;display:inline-block}
+@keyframes wave-move{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}
+.clock-tick{animation:tick 1s steps(2) infinite;display:inline-block}
+@keyframes tick{0%{transform:rotate(-10deg)}100%{transform:rotate(10deg)}}
+
+/* VIDEOS */
+.videos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px}
+.video-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.v-wrap{position:relative;padding-top:56.25%;background:#000}
+.v-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+.v-info{padding:12px}
+.v-tag{display:inline-block;background:rgba(91,140,255,.15);color:var(--accent);
+  padding:2px 8px;border-radius:5px;font-size:10px;font-weight:800;margin-bottom:5px;text-transform:uppercase;letter-spacing:1px}
+.v-info h3{font-weight:800;font-size:.88rem;margin-bottom:4px}
+.v-info p{color:var(--muted);font-size:.78rem;margin-bottom:8px}
+.v-check{display:flex;align-items:center;gap:7px}
+.v-check input{accent-color:var(--accent3);cursor:pointer;width:15px;height:15px}
+.v-check label{font-size:11px;color:var(--muted);cursor:pointer;font-weight:600}
+
+/* MAIN TEST */
+#test-sec{background:var(--bg2)}
+.t-prog-bar{background:var(--card);border-radius:6px;height:6px;margin-bottom:20px;overflow:hidden}
+.t-prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:6px;transition:width .4s;width:0%}
+.test-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:680px;margin:0 auto;display:none}
+.test-card.active{display:block}
+.q-num{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.q-text{font-size:1.05rem;font-weight:700;margin-bottom:18px;line-height:1.5}
+.q-options{display:flex;flex-direction:column;gap:8px}
+.q-option{background:var(--bg2);border:2px solid var(--border);border-radius:9px;
+  padding:11px 16px;cursor:pointer;font-size:.88rem;font-weight:600;
+  transition:all .2s;display:flex;align-items:center;gap:9px;font-family:inherit;color:var(--text)}
+.q-option:hover:not(.disabled){border-color:var(--accent);background:rgba(91,140,255,.06)}
+.q-option.correct{border-color:var(--accent3);background:rgba(67,233,123,.08);color:var(--accent3)}
+.q-option.wrong{border-color:var(--accent2);background:rgba(255,107,157,.08);color:var(--accent2)}
+.q-option.disabled{cursor:default}
+.opt-ltr{width:26px;height:26px;background:var(--card2);border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-weight:900;font-size:.78rem;flex-shrink:0}
+.q-fb{display:none;margin-top:10px;padding:10px;border-radius:7px;font-size:.82rem;line-height:1.5}
+.q-fb.show{display:block}
+.q-fb.ok{background:rgba(67,233,123,.07);border:1px solid rgba(67,233,123,.22);color:var(--accent3)}
+.q-fb.fail{background:rgba(255,107,157,.07);border:1px solid rgba(255,107,157,.22);color:var(--accent2)}
+.next-btn{margin-top:14px;background:var(--accent);color:#fff;border:none;
+  padding:10px 22px;border-radius:9px;cursor:pointer;font-size:.9rem;
+  font-weight:800;display:none;font-family:inherit;transition:opacity .2s}
+.next-btn:hover{opacity:.85}
+#testDone{background:var(--card);border-radius:16px;padding:24px;max-width:680px;margin:0 auto;display:none;text-align:center}
+
+/* ===== REFLECTION SECTION ===== */
+#refl-sec{background:var(--bg)}
+.refl-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.refl-tab{background:var(--card);border:1px solid var(--border);padding:8px 18px;border-radius:9px;
+  cursor:pointer;font-weight:700;font-size:.85rem;transition:all .2s;font-family:inherit;color:var(--text)}
+.refl-tab:hover{border-color:var(--accent);color:var(--accent)}
+.refl-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.refl-panel{display:none}.refl-panel.active{display:block}
+
+/* ROCKET */
+.rocket-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:580px}
+.r-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.r-pill{background:var(--bg2);border:1px solid var(--border);padding:4px 12px;border-radius:16px;font-size:11px;font-weight:700}
+.r-pill span{color:var(--accent4)}
+.r-prog{height:5px;background:var(--bg2);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.r-prog-f{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px;transition:width .4s}
+.r-q{font-size:1rem;font-weight:700;margin-bottom:14px;line-height:1.5}
+.r-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.r-opt{background:var(--bg2);border:2px solid var(--border);border-radius:9px;
+  padding:10px 14px;cursor:pointer;font-weight:600;transition:all .2s;
+  font-family:inherit;color:var(--text);font-size:.88rem;text-align:left}
+.r-opt:hover:not(:disabled){border-color:var(--accent4)}
+.r-opt.correct{border-color:var(--accent3);background:rgba(67,233,123,.1);color:var(--accent3)}
+.r-opt.wrong{border-color:var(--accent2);background:rgba(255,107,157,.1);color:var(--accent2)}
+.r-fb{font-size:.85rem;font-weight:700;min-height:24px}
+
+/* MATCH */
+.match-box{max-width:680px}
+.match-instr{color:var(--muted);font-size:.85rem;margin-bottom:14px}
+.match-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.match-cols{grid-template-columns:1fr}}
+.match-col-title{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.match-items{display:flex;flex-direction:column;gap:7px}
+.match-item{background:var(--card);border:2px solid var(--border);border-radius:9px;
+  padding:10px 13px;cursor:pointer;font-size:.82rem;font-weight:600;
+  transition:all .2s;user-select:none;min-height:42px;display:flex;align-items:center}
+.match-item:hover{border-color:var(--accent)}
+.match-item.sel{border-color:var(--accent4);background:rgba(249,202,36,.08)}
+.match-item.matched{border-color:var(--accent3);background:rgba(67,233,123,.07);color:var(--accent3);cursor:default}
+.match-item.wrong{border-color:var(--accent2);animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.match-res{margin-top:12px;font-weight:800;font-size:.95rem}
+
+/* SELF ASSESSMENT */
+.self-assess{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:680px}
+.self-assess h3{font-size:1rem;font-weight:800;margin-bottom:16px;color:var(--accent)}
+.assess-row{margin-bottom:18px}
+.assess-label{font-size:.88rem;font-weight:700;margin-bottom:8px}
+.assess-stars{display:flex;gap:6px;flex-wrap:wrap}
+.star-btn{background:var(--bg2);border:2px solid var(--border);border-radius:8px;
+  padding:7px 14px;cursor:pointer;font-size:1.1rem;transition:all .2s;font-family:inherit}
+.star-btn:hover{border-color:var(--accent4);transform:scale(1.1)}
+.star-btn.sel{border-color:var(--accent4);background:rgba(249,202,36,.12)}
+.assess-textarea{width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 13px;color:var(--text);font-family:inherit;
+  font-size:.85rem;resize:vertical;min-height:70px;outline:none;transition:border .2s}
+.assess-textarea:focus{border-color:var(--accent)}
+.assess-submit{margin-top:10px;background:var(--accent3);border:none;border-radius:9px;
+  padding:11px 26px;color:#000;font-family:inherit;font-weight:800;cursor:pointer;font-size:.9rem;transition:opacity .2s}
+.assess-submit:hover{opacity:.85}
+
+/* ===== ACCESS EXPIRED OVERLAY ===== */
+#expiredOverlay{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.92);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;text-align:center;padding:20px;
+}
+.exp-box{background:var(--card);border:1px solid var(--border);border-radius:24px;
+  padding:40px 36px;max-width:520px;width:100%}
+.exp-emoji{font-size:3.5rem;margin-bottom:10px}
+.exp-title{font-family:'Baloo 2',cursive;font-size:1.8rem;font-weight:800;color:var(--accent2);margin-bottom:6px}
+.exp-sub{color:var(--muted);font-size:.88rem;margin-bottom:18px}
+.exp-score-big{font-size:3.2rem;font-weight:900;color:var(--accent);margin:10px 0}
+.exp-breakdown{background:var(--bg2);border-radius:10px;padding:14px;text-align:left;margin:12px 0}
+.exp-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.exp-row:last-child{border:none}
+.exp-row span:last-child{color:var(--accent4);font-weight:800}
+.exp-medal{font-size:2.5rem;margin-bottom:8px}
+.exp-congrats{background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.3);
+  border-radius:10px;padding:14px;margin:10px 0;color:var(--accent3);font-weight:700;line-height:1.6;font-size:.9rem}
+.exp-low{background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.3);
+  border-radius:10px;padding:14px;margin:10px 0;color:var(--accent2);font-weight:700;line-height:1.6;font-size:.9rem}
+.exp-farewell{color:var(--muted);font-size:.88rem;margin-top:14px}
+
+/* ===== REFLECTION EXPIRED POPUP ===== */
+#reflPopup{
+  display:none;position:fixed;inset:0;z-index:400;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;
+}
+.refl-popup-box{background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:32px;max-width:700px;width:100%;margin:auto}
+.rp-title{font-family:'Baloo 2',cursive;font-size:1.6rem;font-weight:800;
+  background:linear-gradient(135deg,#5b8cff,#ff6b9d);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.rp-sub{color:var(--muted);font-size:.85rem;margin-bottom:22px}
+.rp-section{margin-bottom:20px}
+.rp-section h4{font-size:.9rem;font-weight:800;color:var(--accent);margin-bottom:10px}
+.rp-opts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.rp-opt{background:var(--bg2);border:2px solid var(--border);border-radius:8px;
+  padding:7px 14px;cursor:pointer;font-size:.82rem;font-weight:700;
+  transition:all .2s;font-family:inherit;color:var(--text)}
+.rp-opt:hover{border-color:var(--accent)}
+.rp-opt.sel{border-color:var(--accent);background:rgba(91,140,255,.1);color:var(--accent)}
+.rp-textarea{width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 13px;color:var(--text);font-family:inherit;
+  font-size:.85rem;resize:vertical;min-height:70px;outline:none;transition:border .2s}
+.rp-textarea:focus{border-color:var(--accent)}
+.rp-submit{background:linear-gradient(135deg,var(--accent3),#2ecc71);border:none;border-radius:10px;
+  padding:13px 30px;color:#000;font-family:inherit;font-weight:800;cursor:pointer;
+  font-size:.95rem;width:100%;margin-top:4px;transition:opacity .2s}
+.rp-submit:hover{opacity:.85}
+.rp-done{display:none;background:rgba(67,233,123,.1);border:1px solid rgba(67,233,123,.3);
+  border-radius:10px;padding:16px;color:var(--accent3);font-weight:700;text-align:center;font-size:.95rem;margin-top:10px}
+
+/* ===== TEACHER PANEL ===== */
+#teacherScreen{min-height:100vh;padding:24px 20px;background:var(--bg)}
+.t-header{background:var(--card2);border:1px solid var(--border);border-radius:14px;
+  padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:10px}
+.t-header h2{font-family:'Baloo 2',cursive;font-size:1.5rem;font-weight:800}
+.t-header h2 span{color:var(--accent)}
+.t-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-c{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:16px;text-align:center}
+.stat-n{font-size:1.9rem;font-weight:900;color:var(--accent)}
+.stat-l{color:var(--muted);font-size:.78rem;margin-top:3px}
+.t-table{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.th-row{background:var(--card2);display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;
+  padding:10px 18px;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.td-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;
+  padding:12px 18px;border-top:1px solid var(--border);font-size:.82rem;align-items:center}
+.td-row:hover{background:rgba(91,140,255,.03)}
+.td-row .name{font-weight:700}
+.s-hi{color:var(--accent3);font-weight:800}.s-mid{color:var(--accent4);font-weight:800}.s-lo{color:var(--accent2);font-weight:800}
+.exp-btn{background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+  padding:3px 9px;cursor:pointer;font-size:10px;color:var(--accent);font-family:inherit;font-weight:700}
+.stu-detail{display:none;background:var(--bg2);border-top:1px solid var(--border);padding:14px 18px}
+.stu-detail.open{display:block}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.det-card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px}
+.det-card h5{font-size:.78rem;font-weight:800;color:var(--accent);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px}
+.det-card p{font-size:.8rem;color:var(--muted);line-height:1.6}
+.det-card .ans{color:var(--text);font-size:.82rem;background:var(--bg2);border-radius:5px;padding:7px;margin-top:5px}
+.err-tag{display:inline-block;background:rgba(255,107,157,.14);color:var(--accent2);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700}
+.ok-tag{display:inline-block;background:rgba(67,233,123,.12);color:var(--accent3);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700}
+.refl-tag{display:inline-block;background:rgba(91,140,255,.12);color:var(--accent);border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;margin:2px}
+.t-refresh{background:var(--accent);border:none;border-radius:9px;padding:8px 18px;
+  color:#fff;font-family:inherit;font-weight:800;cursor:pointer;font-size:12px;transition:opacity .2s}
+.t-refresh:hover{opacity:.85}
+.t-logout{background:transparent;border:1px solid var(--border);color:var(--muted);
+  padding:7px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-family:inherit;transition:all .2s}
+.t-logout:hover{border-color:var(--accent2);color:var(--accent2)}
+.refl-summary{background:rgba(91,140,255,.07);border:1px solid rgba(91,140,255,.2);
+  border-radius:8px;padding:10px;margin-top:8px;font-size:.8rem;line-height:1.7}
+.refl-summary strong{color:var(--accent)}
+@media(max-width:700px){
+  .th-row,.td-row{grid-template-columns:2fr 1fr 1fr 2fr}
+  .th-row .hc3,.th-row .hc4,.th-row .hc5,
+  .td-row .tc3,.td-row .tc4,.td-row .tc5{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== AUTH ===== -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">⚛️</div>
+    <div class="auth-title">Физика Платформасы</div>
+    <div class="auth-sub">Тербелмелі қозғалыс · 9А сынып</div>
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="switchRole('student')">🎓 Оқушы</button>
+      <button class="role-tab" onclick="switchRole('teacher')">👩‍🏫 Мұғалім</button>
+    </div>
+    <div id="stuForm">
+      <input class="inp" id="stuName" placeholder="Толық аты-жөніңіз (мыс: Айгүл Нұрланова)">
+      <input class="inp" id="stuCode" type="password" placeholder="Сынып коды">
+      <button class="btn-primary" onclick="stuLogin()">🚀 Сабаққа кіру</button>
+      <div class="auth-hint">Сынып коды: <strong>9A2025</strong><br>⏱ Кіргеннен 40 минут уақыт беріледі</div>
+    </div>
+    <div id="tchForm" style="display:none">
+      <input class="inp" id="tchLogin" placeholder="Логин">
+      <input class="inp" id="tchPass" type="password" placeholder="Пароль">
+      <button class="btn-primary" onclick="tchLogin()">🔐 Кіру</button>
+      <div class="auth-hint">Логин: <strong>seitzh</strong> &nbsp;|&nbsp; Пароль: <strong>fizika2025</strong></div>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+  </div>
+</div>
+
+<!-- ===== TIMER BAR ===== -->
+<div id="timerBar" style="display:none">
+  <div class="t-clock" id="tClock">40:00</div>
+  <div class="t-prog"><div class="t-fill" id="tFill"></div></div>
+  <div class="t-pill">⭐ <span id="tScore">0</span>/100</div>
+  <div class="t-user" id="tUser"></div>
+  <button class="t-out-btn" onclick="doLogout()">↩ Шығу</button>
+</div>
+
+<!-- ===== LESSON SCREEN ===== -->
+<div class="screen" id="lessonScreen">
+
+<nav id="mainNav" style="display:none">
+  <div class="nav-inner">
+    <a href="#lec-sec">📖 Лекция</a>
+    <a href="#anim-sec">🎬 Демо</a>
+    <a href="#formula-sec">📐 Формулалар</a>
+    <a href="#daily-sec">🌍 Өмір</a>
+    <a href="#video-sec">🎥 Видео</a>
+    <a href="#test-sec">🧪 Тест</a>
+    <a href="#refl-sec">💭 Рефлексия</a>
+  </div>
+</nav>
+
+<!-- HEADER -->
+<div class="lesson-header">
+  <div class="h-tag">⚡ 9-сынып · Физика · Тербелістер</div>
+  <h1>Тербелмелі қозғалыс</h1>
+  <p>Мұғалім: <strong>Сейтжаппар Ұлболсын</strong></p>
+  <div class="meta-badges">
+    <div class="badge">🎯 <span>9А</span></div>
+    <div class="badge">⏱ <span>40 мин</span></div>
+    <div class="badge">⭐ Жалпы: <span>100 балл</span></div>
+  </div>
+</div>
+
+<!-- LECTURE -->
+<section class="ls" id="lec-sec">
+  <div class="container">
+    <div class="s-title">📖 <span class="hl">Лекция</span></div>
+    <div class="s-sub">Оқып болғаннан кейін конспект жаз → <strong style="color:var(--accent4)">+10 балл</strong></div>
+    <div class="lecture-box">
+      <h3>1. Тербелмелі қозғалыс дегеніміз не?</h3>
+      <p>Тербелмелі қозғалыс — денені тепе-теңдік жағдайынан ауытқытқанда, ол сол жағдайға мерзімді ретте қайталап оралатын қозғалыс. Бұл табиғатта өте жиі кездеседі: маятниктің тербелісі, жүрек соғысы, дыбыс толқындары, электр тогының ауысуы және тіпті атомдардың тербелісі осы санатқа жатады.</p>
+      <p>Тербелмелі жүйе тепе-теңдіктен ауытқыған сәтте, оны сол жағдайға қайтаратын <strong style="color:var(--accent)">серпімдік</strong> немесе <strong style="color:var(--accent)">гравитациялық</strong> күш пайда болады. Осы күштер тербелісті жалғастырады.</p>
+    </div>
+    <div class="lecture-box">
+      <h3>2. Тербелісті сипаттайтын шамалар</h3>
+      <p><strong style="color:var(--accent)">Амплитуда (A)</strong> — тепе-теңдік жағдайынан ең үлкен ауытқу. Метрмен (м) өлшенеді. Тербелістің «қуатын» білдіреді.</p>
+      <p><strong style="color:var(--accent3)">Период (T)</strong> — бір толық тербеліс жасауға кететін уақыт. Секундпен (с) өлшенеді. T = 1/ν.</p>
+      <p><strong style="color:var(--accent2)">Жиілік (ν)</strong> — бір секундта орындалатын тербелістер саны. Герцпен (Гц) өлшенеді. ν = 1/T.</p>
+      <p><strong style="color:var(--accent4)">Циклдік жиілік (ω)</strong> — ω = 2π/T = 2πν, рад/с-пен өлшенеді. Математикалық есептерде жиі қолданылады.</p>
+    </div>
+    <div class="lecture-box">
+      <h3>3. Еркін және өшпелі тербеліс</h3>
+      <p><strong style="color:var(--accent)">Еркін тербеліс</strong> — тек серпімдік немесе гравитациялық күштің әсерімен жүретін, сыртқы күш болмайтын тербеліс. Маятник пен серіппелі маятник осының мысалы.</p>
+      <p><strong style="color:var(--accent2)">Өшпелі тербеліс</strong> — үйкеліс немесе кедергі күшінің әсерінен амплитудасы біртіндеп кемитін тербеліс. Нақты дүниедегі барлық тербелістер өшпелі болады.</p>
+    </div>
+    <div style="background:rgba(249,202,36,.07);border:1px solid rgba(249,202,36,.25);border-radius:12px;padding:18px;margin-top:4px">
+      <div style="font-size:10px;font-weight:800;color:var(--accent4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">✍️ Конспект — +10 балл</div>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px">Лекциядан өз сөзіңмен кем дегенде 3 ой жаз:</p>
+      <textarea class="note-area" id="lectureNote" placeholder="Мысалы: Тербелмелі қозғалыс дегеніміз — ... Амплитуда — ... Еркін тербеліс — ..."></textarea>
+      <div style="display:flex;align-items:center">
+        <button class="save-btn" onclick="saveLecture()">💾 Сақтау (+10 балл)</button>
+        <span class="saved-ok" id="lecSaved">✅ Сақталды! +10 балл</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="ls" id="anim-sec" style="background:var(--bg2)">
+  <div class="container">
+    <div class="s-title">🎬 <span class="hl">Интерактивті</span> демонстрация</div>
+    <div class="s-sub">Параметрлерді өзгертіп тербелісті бақыла!</div>
+    <div class="anim-grid">
+      <div class="anim-box">
+        <h3>🪝 Математикалық маятник</h3>
+        <canvas id="pCanvas" width="290" height="230"></canvas>
+        <div class="sl-row"><label>Ұзындық:</label>
+          <input type="range" id="pLen" min="60" max="150" value="100" oninput="document.getElementById('pLenV').textContent=this.value">
+          <span class="sl-val" id="pLenV">100</span>мм
+        </div>
+        <div class="sl-row"><label>Амплитуда:</label>
+          <input type="range" id="pAmp" min="10" max="50" value="30" oninput="document.getElementById('pAmpV').textContent=this.value">
+          <span class="sl-val" id="pAmpV">30</span>°
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+          <button class="ctrl-btn on" id="pPlayBtn" onclick="toggleP()">⏸ Тоқтату</button>
+          <button class="ctrl-btn" onclick="pT=0">🔄</button>
+        </div>
+      </div>
+      <div class="anim-box">
+        <h3>🌀 Серіппелі маятник</h3>
+        <canvas id="sCanvas" width="290" height="230"></canvas>
+        <div class="sl-row"><label>Масса:</label>
+          <input type="range" id="sMass" min="1" max="5" value="2" step=".5" oninput="document.getElementById('sMassV').textContent=this.value">
+          <span class="sl-val" id="sMassV">2</span>кг
+        </div>
+        <div class="sl-row"><label>Қатаңдық:</label>
+          <input type="range" id="sK" min="10" max="100" value="40" oninput="document.getElementById('sKV').textContent=this.value">
+          <span class="sl-val" id="sKV">40</span>Н/м
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+          <button class="ctrl-btn on" id="sPlayBtn" onclick="toggleS()">⏸ Тоқтату</button>
+          <button class="ctrl-btn" id="dampBtn" onclick="toggleDamp()">📉 Өшпелі</button>
+        </div>
+      </div>
+    </div>
+    <div class="anim-box" style="margin-top:18px">
+      <h3>📈 Тербеліс графигі x(t)</h3>
+      <canvas id="gCanvas" width="700" height="150" style="width:100%;max-width:700px"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULAS -->
+<section class="ls" id="formula-sec">
+  <div class="container">
+    <div class="s-title">📐 Формулалар және <span class="hl">есептер</span></div>
+    <div class="s-sub">Тест есептер: 4×2=8 балл · Жазбаша: 4×3=12 балл · Барлығы: 20 балл</div>
+    <div class="formulas-grid">
+
+      <!-- F1 -->
+      <div class="formula-card">
+        <div class="formula-header">
+          <div class="f-num" style="background:var(--accent)">1</div>
+          <h3>Математикалық маятник T</h3>
+        </div>
+        <div class="formula-body">
+          <div class="f-box" style="background:rgba(91,140,255,.07);border:2px solid rgba(91,140,255,.25)">
+            <div class="f-big" style="color:var(--accent)">T = 2π √(L/g)</div>
+            <div class="f-vars">T — период (с) | L — ұзындық (м) | g = 9,8 м/с²</div>
+          </div>
+          <div class="task-box">
+            <div class="task-lbl">✏️ Тест — <span style="color:var(--accent4)">+2 балл</span></div>
+            <p style="font-size:.82rem">L = 1 м болса, T ≈ ?</p>
+            <div class="q-opts-f" id="f1o">
+              <button class="q-opt-f" onclick="checkFQ('f1',this,true)"><div class="opt-l">A</div>T ≈ 2,0 с ✓</button>
+              <button class="q-opt-f" onclick="checkFQ('f1',this,false)"><div class="opt-l">B</div>T ≈ 0,5 с</button>
+              <button class="q-opt-f" onclick="checkFQ('f1',this,false)"><div class="opt-l">C</div>T ≈ 4,0 с</button>
+            </div>
+            <div id="f1fb" class="f-feedback"></div>
+          </div>
+          <div class="written-task">
+            <div class="w-lbl">📝 Жазбаша — <span>+3 балл</span></div>
+            <p style="font-size:.82rem;margin-bottom:6px">L = 0,25 м болса, T = ?</p>
+            <div class="w-given"><span>Берілген:</span> L = 0,25 м; g = 9,8 м/с² &nbsp;|&nbsp; <span>Тап:</span> T</div>
+            <textarea class="w-inp" id="w1" placeholder="T = 2π√(L/g) = 2π√(0.25/9.8) = ..."></textarea>
+            <button class="w-btn" onclick="checkW('w1','w1f','1.0,1.00,0.99,1.01,1.003')">✅ Тексеру</button>
+            <div class="w-fb" id="w1f"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- F2 -->
+      <div class="formula-card">
+        <div class="formula-header">
+          <div class="f-num" style="background:var(--accent2)">2</div>
+          <h3>Серіппелі маятник T</h3>
+        </div>
+        <div class="formula-body">
+          <div class="f-box" style="background:rgba(255,107,157,.06);border:2px solid rgba(255,107,157,.25)">
+            <div class="f-big" style="color:var(--accent2)">T = 2π √(m/k)</div>
+            <div class="f-vars">T — период (с) | m — масса (кг) | k — қатаңдық (Н/м)</div>
+          </div>
+          <div class="task-box">
+            <div class="task-lbl">✏️ Тест — <span style="color:var(--accent4)">+2 балл</span></div>
+            <p style="font-size:.82rem">k = 100 Н/м, m = 1 кг болса, T ≈ ?</p>
+            <div class="q-opts-f" id="f2o">
+              <button class="q-opt-f" onclick="checkFQ('f2',this,false)"><div class="opt-l">A</div>T ≈ 1,0 с</button>
+              <button class="q-opt-f" onclick="checkFQ('f2',this,true)"><div class="opt-l">B</div>T ≈ 0,63 с ✓</button>
+              <button class="q-opt-f" onclick="checkFQ('f2',this,false)"><div class="opt-l">C</div>T ≈ 3,14 с</button>
+            </div>
+            <div id="f2fb" class="f-feedback"></div>
+          </div>
+          <div class="written-task">
+            <div class="w-lbl">📝 Жазбаша — <span>+3 балл</span></div>
+            <p style="font-size:.82rem;margin-bottom:6px">k = 25 Н/м, m = 1 кг. T = ?</p>
+            <div class="w-given"><span>Берілген:</span> k = 25 Н/м; m = 1 кг &nbsp;|&nbsp; <span>Тап:</span> T</div>
+            <textarea class="w-inp" id="w2" placeholder="T = 2π√(m/k) = 2π√(1/25) = 2π·0.2 = ..."></textarea>
+            <button class="w-btn" onclick="checkW('w2','w2f','1.257,1.26,1.25,1.26,1.257')">✅ Тексеру</button>
+            <div class="w-fb" id="w2f"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- F3 -->
+      <div class="formula-card">
+        <div class="formula-header">
+          <div class="f-num" style="background:var(--accent3)">3</div>
+          <h3>Жиілік — Период</h3>
+        </div>
+        <div class="formula-body">
+          <div class="f-box" style="background:rgba(67,233,123,.06);border:2px solid rgba(67,233,123,.25)">
+            <div class="f-big" style="color:var(--accent3)">ν = 1/T &nbsp; T = 1/ν</div>
+            <div class="f-vars">ν — жиілік (Гц) | T — период (с)</div>
+          </div>
+          <div class="task-box">
+            <div class="task-lbl">✏️ Тест — <span style="color:var(--accent4)">+2 балл</span></div>
+            <p style="font-size:.82rem">T = 0,5 с болса, ν = ?</p>
+            <div class="q-opts-f" id="f3o">
+              <button class="q-opt-f" onclick="checkFQ('f3',this,false)"><div class="opt-l">A</div>ν = 0,5 Гц</button>
+              <button class="q-opt-f" onclick="checkFQ('f3',this,true)"><div class="opt-l">B</div>ν = 2 Гц ✓</button>
+              <button class="q-opt-f" onclick="checkFQ('f3',this,false)"><div class="opt-l">C</div>ν = 5 Гц</button>
+            </div>
+            <div id="f3fb" class="f-feedback"></div>
+          </div>
+          <div class="written-task">
+            <div class="w-lbl">📝 Жазбаша — <span>+3 балл</span></div>
+            <p style="font-size:.82rem;margin-bottom:6px">N = 120 тербеліс, t = 60 с. ν мен T = ?</p>
+            <div class="w-given"><span>Берілген:</span> N = 120; t = 60 с</div>
+            <textarea class="w-inp" id="w3" placeholder="ν = N/t = 120/60 = 2 Гц; T = 1/ν = 0,5 с"></textarea>
+            <button class="w-btn" onclick="checkW('w3','w3f','2,2гц,ν=2,2 гц,жиілік 2')">✅ Тексеру</button>
+            <div class="w-fb" id="w3f"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- F4 -->
+      <div class="formula-card">
+        <div class="formula-header">
+          <div class="f-num" style="background:var(--accent4);color:#000">4</div>
+          <h3>Циклдік жиілік ω</h3>
+        </div>
+        <div class="formula-body">
+          <div class="f-box" style="background:rgba(249,202,36,.06);border:2px solid rgba(249,202,36,.25)">
+            <div class="f-big" style="color:var(--accent4)">ω = 2π/T = 2πν</div>
+            <div class="f-vars">ω — циклдік жиілік (рад/с)</div>
+          </div>
+          <div class="task-box">
+            <div class="task-lbl">✏️ Тест — <span style="color:var(--accent4)">+2 балл</span></div>
+            <p style="font-size:.82rem">T = 1 с болса, ω ≈ ?</p>
+            <div class="q-opts-f" id="f4o">
+              <button class="q-opt-f" onclick="checkFQ('f4',this,false)"><div class="opt-l">A</div>ω = π рад/с</button>
+              <button class="q-opt-f" onclick="checkFQ('f4',this,true)"><div class="opt-l">B</div>ω = 2π ≈ 6,28 рад/с ✓</button>
+              <button class="q-opt-f" onclick="checkFQ('f4',this,false)"><div class="opt-l">C</div>ω = 4π рад/с</button>
+            </div>
+            <div id="f4fb" class="f-feedback"></div>
+          </div>
+          <div class="written-task">
+            <div class="w-lbl">📝 Жазбаша — <span>+3 балл</span></div>
+            <p style="font-size:.82rem;margin-bottom:6px">T = 0,5 с болса, ω = ?</p>
+            <div class="w-given"><span>Берілген:</span> T = 0,5 с</div>
+            <textarea class="w-inp" id="w4" placeholder="ω = 2π/T = 2π/0,5 = 4π ≈ 12,57 рад/с"></textarea>
+            <button class="w-btn" onclick="checkW('w4','w4f','12.57,12.56,12.6,4π,4pi,12.5')">✅ Тексеру</button>
+            <div class="w-fb" id="w4f"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- DAILY -->
+<section class="ls" id="daily-sec" style="background:var(--bg2)">
+  <div class="container">
+    <div class="s-title">🌍 Күнделікті <span class="hl">өмірде</span></div>
+    <div class="s-sub">Тербелістер бізді қоршаған!</div>
+    <div class="daily-grid">
+      <div class="daily-card"><div class="d-anim" style="background:linear-gradient(135deg,#1a1e35,#2d1b4e)"><span class="swing">🪀</span></div><div class="d-info"><h3>⛺ Тербелгіш</h3><p>Маятник: T = 2π√(L/g). Период ұзындыққа байланысты.</p></div></div>
+      <div class="daily-card"><div class="d-anim" style="background:linear-gradient(135deg,#1a2e1e,#1b3d2d)"><span class="heartbeat">❤️</span></div><div class="d-info"><h3>💓 Жүрек соғысы</h3><p>Норма: 60–100/мин. ν ≈ 1 Гц, T ≈ 1 с.</p></div></div>
+      <div class="daily-card"><div class="d-anim" style="background:linear-gradient(135deg,#2e1a1a,#3d1b1b)"><span class="vibrate">🎸</span></div><div class="d-info"><h3>🎵 Гитара іші</h3><p>Орта А = 440 Гц. Тербеліс → дыбыс.</p></div></div>
+      <div class="daily-card"><div class="d-anim" style="background:linear-gradient(135deg,#1a1a2e,#1b1b40)"><span class="clock-tick">⏰</span></div><div class="d-info"><h3>🕰 Механикалық сағат</h3><p>Маятник T = 1 с. Дәл жұмыс.</p></div></div>
+      <div class="daily-card"><div class="d-anim" style="background:linear-gradient(135deg,#2e2a1a,#3d3b1b)"><span class="wave-anim">🌊</span></div><div class="d-info"><h3>🌊 Су толқындары</h3><p>Беткейдің мерзімді тербелісі.</p></div></div>
+      <div class="daily-card"><div class="d-anim" style="background:linear-gradient(135deg,#1e2a1a,#243d1b)"><span class="bounce">🏀</span></div><div class="d-info"><h3>🏀 Допты секіру</h3><p>Өшпелі тербеліс — амплитуда кемиді.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<section class="ls" id="video-sec">
+  <div class="container">
+    <div class="s-title">🎥 Видео <span class="hl">түсіндірмелер</span></div>
+    <div class="s-sub">3 видео көр → <strong style="color:var(--accent4)">+5 балл</strong></div>
+    <div class="videos-grid">
+      <div class="video-card">
+        <div class="v-wrap"><iframe src="https://www.youtube.com/embed/W1TMZASCR-I?rel=0" allowfullscreen loading="lazy"></iframe></div>
+        <div class="v-info"><div class="v-tag">📚 Негіздер</div><h3>Тербелмелі қозғалыс</h3><p>Амплитуда, период, жиілік.</p>
+          <div class="v-check"><input type="checkbox" id="v1" onchange="vidWatch('v1',1)"><label for="v1">✅ Көрдім (+1 балл)</label></div>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="v-wrap"><iframe src="https://www.youtube.com/embed/yVkdfJ9PkRQ?rel=0" allowfullscreen loading="lazy"></iframe></div>
+        <div class="v-info"><div class="v-tag">🪝 Маятник</div><h3>Математикалық маятник</h3><p>Период формуласы.</p>
+          <div class="v-check"><input type="checkbox" id="v2" onchange="vidWatch('v2',2)"><label for="v2">✅ Көрдім (+2 балл)</label></div>
+        </div>
+      </div>
+      <div class="video-card">
+        <div class="v-wrap"><iframe src="https://www.youtube.com/embed/OBSNRHBpxhg?rel=0" allowfullscreen loading="lazy"></iframe></div>
+        <div class="v-info"><div class="v-tag">🌀 Серіппе</div><h3>Серіппелі маятник</h3><p>m, k және T байланысы.</p>
+          <div class="v-check"><input type="checkbox" id="v3" onchange="vidWatch('v3',2)"><label for="v3">✅ Көрдім (+2 балл)</label></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN TEST -->
+<section class="ls" id="test-sec" style="background:var(--bg2)">
+  <div class="container">
+    <div class="s-title">🧪 <span class="hl">Білімді</span> тексеру</div>
+    <div class="s-sub">10 сұрақ × 3 балл = 30 балл</div>
+    <div class="t-prog-bar"><div class="t-prog-fill" id="testFill"></div></div>
+    <div id="testContainer"></div>
+    <div id="testDone"></div>
+  </div>
+</section>
+
+<!-- REFLECTION (inside lesson, games only, no feedback) -->
+<section class="ls" id="refl-sec">
+  <div class="container">
+    <div class="s-title">💭 <span class="hl">Рефлексия ойындары</span></div>
+    <div class="s-sub">Ракета ойыны: 15 балл · Сәйкестендіру: 10 балл — доступ кезінде ойна!</div>
+    <div class="refl-tabs">
+      <button class="refl-tab active" onclick="switchRefl(0)">🚀 Ракета ойыны</button>
+      <button class="refl-tab" onclick="switchRefl(1)">🔗 Сәйкестендіру</button>
+    </div>
+
+    <!-- ROCKET -->
+    <div class="refl-panel active" id="rp0">
+      <div class="rocket-box">
+        <div class="r-stats">
+          <div class="r-pill">🚀 Деңгей: <span id="rl">1</span>/10</div>
+          <div class="r-pill">⭐ Балл: <span id="rs">0</span>/15</div>
+          <div class="r-pill">❤️ Өмір: <span id="rlv">❤️❤️❤️</span></div>
+        </div>
+        <div class="r-prog"><div class="r-prog-f" id="rpf" style="width:0%"></div></div>
+        <div id="rArea"></div>
+      </div>
+    </div>
+
+    <!-- MATCH -->
+    <div class="refl-panel" id="rp1">
+      <div class="match-box">
+        <div class="match-instr">Сол бағандағы шаманы оң бағандағы анықтамасымен сәйкестендір! <em style="color:var(--accent4)">(Барлығы дұрыс → +10 балл)</em></div>
+        <div class="match-cols">
+          <div>
+            <div class="match-col-title">🔤 Термин</div>
+            <div class="match-items">
+              <div class="match-item" id="mt0" onclick="pickM('t',0)">Амплитуда (A)</div>
+              <div class="match-item" id="mt1" onclick="pickM('t',1)">Период (T)</div>
+              <div class="match-item" id="mt2" onclick="pickM('t',2)">Жиілік (ν)</div>
+              <div class="match-item" id="mt3" onclick="pickM('t',3)">Циклдік жиілік (ω)</div>
+              <div class="match-item" id="mt4" onclick="pickM('t',4)">Өшпелі тербеліс</div>
+            </div>
+          </div>
+          <div>
+            <div class="match-col-title">📖 Анықтама</div>
+            <div class="match-items">
+              <div class="match-item" id="md2" onclick="pickM('d',2)">1 секундтағы тербелістер саны, Гц</div>
+              <div class="match-item" id="md4" onclick="pickM('d',4)">Амплитудасы кемитін тербеліс</div>
+              <div class="match-item" id="md0" onclick="pickM('d',0)">Ең үлкен ауытқу, метрмен өлшенеді</div>
+              <div class="match-item" id="md3" onclick="pickM('d',3)">2πν рад/с-пен өлшенеді</div>
+              <div class="match-item" id="md1" onclick="pickM('d',1)">Толық тербеліс уақыты, секунд</div>
+            </div>
+          </div>
+        </div>
+        <div class="match-res" id="matchRes"></div>
+        <button class="ctrl-btn" onclick="resetM()" style="margin-top:12px">🔄 Қайта</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /lessonScreen -->
+
+<!-- ===== REFLECTION POPUP (after timer ends) ===== -->
+<div id="reflPopup" style="display:none">
+  <div class="refl-popup-box">
+    <div class="rp-title">💭 Өзін-өзі бағалау — Рефлексия</div>
+    <div class="rp-sub">Уақыт аяқталды. Рефлексияны толтыр — мұғалімге жіберіледі!</div>
+
+    <!-- SELF ASSESSMENT -->
+    <div class="rp-section">
+      <h4>⭐ Сабақ қаншалықты қызықты болды?</h4>
+      <div class="rp-opts" id="rpRating">
+        <button class="rp-opt" onclick="selRP('rpRating',this,'⭐ Нашар')">⭐ Нашар</button>
+        <button class="rp-opt" onclick="selRP('rpRating',this,'⭐⭐ Орташа')">⭐⭐ Орташа</button>
+        <button class="rp-opt" onclick="selRP('rpRating',this,'⭐⭐⭐ Жақсы')">⭐⭐⭐ Жақсы</button>
+        <button class="rp-opt" onclick="selRP('rpRating',this,'⭐⭐⭐⭐ Өте жақсы')">⭐⭐⭐⭐ Өте жақсы</button>
+      </div>
+    </div>
+    <div class="rp-section">
+      <h4>📚 Материал түсінікті болды ма?</h4>
+      <div class="rp-opts" id="rpClear">
+        <button class="rp-opt" onclick="selRP('rpClear',this,'Иә, толық')">Иә, толық</button>
+        <button class="rp-opt" onclick="selRP('rpClear',this,'Жартылай')">Жартылай</button>
+        <button class="rp-opt" onclick="selRP('rpClear',this,'Қиын болды')">Қиын болды</button>
+      </div>
+    </div>
+    <div class="rp-section">
+      <h4>💡 Ең қызықты бөлім қайсы?</h4>
+      <div class="rp-opts" id="rpBest">
+        <button class="rp-opt" onclick="selRP('rpBest',this,'Анимация')">🎬 Анимация</button>
+        <button class="rp-opt" onclick="selRP('rpBest',this,'Формулалар')">📐 Формулалар</button>
+        <button class="rp-opt" onclick="selRP('rpBest',this,'Ракета ойыны')">🚀 Ракета ойыны</button>
+        <button class="rp-opt" onclick="selRP('rpBest',this,'Видео')">🎥 Видео</button>
+      </div>
+    </div>
+    <div class="rp-section">
+      <h4>🌟 Бүгінгі сабақтан үйрендім...</h4>
+      <textarea class="rp-textarea" id="rpLearned" placeholder="Өз сөзіңмен жаз..."></textarea>
+    </div>
+    <div class="rp-section">
+      <h4>❓ Жауапсыз қалған сұрағым...</h4>
+      <textarea class="rp-textarea" id="rpQuestion" placeholder="Не түсінбедің?..."></textarea>
+    </div>
+    <div class="rp-section">
+      <h4>💪 Маған қиын болды...</h4>
+      <textarea class="rp-textarea" id="rpHard" placeholder="Қай тақырып немесе есеп қиын болды?..."></textarea>
+    </div>
+    <div class="rp-section">
+      <h4>🎯 Мен бұл сабаққа өзімді қалай бағалаймын?</h4>
+      <div class="rp-opts" id="rpSelf">
+        <button class="rp-opt" onclick="selRP('rpSelf',this,'😔 Толық меңгермедім')">😔 Толық меңгермедім</button>
+        <button class="rp-opt" onclick="selRP('rpSelf',this,'😐 Жартылай меңгердім')">😐 Жартылай</button>
+        <button class="rp-opt" onclick="selRP('rpSelf',this,'😊 Жақсы меңгердім')">😊 Жақсы меңгердім</button>
+        <button class="rp-opt" onclick="selRP('rpSelf',this,'🏆 Толық меңгердім')">🏆 Толық меңгердім</button>
+      </div>
+    </div>
+
+    <button class="rp-submit" onclick="submitReflection()">📩 Жіберу және нәтижені көру</button>
+    <div class="rp-done" id="rpDone">✅ Рефлексия жіберілді! Нәтиже жүктелуде...</div>
+  </div>
+</div>
+
+<!-- ===== ACCESS EXPIRED OVERLAY ===== -->
+<div id="expiredOverlay" style="display:none">
+  <div class="exp-box">
+    <div class="exp-emoji">⏰</div>
+    <div class="exp-title">Уақыт бітті!</div>
+    <div class="exp-sub">40 минуттық сабақ аяқталды</div>
+    <div class="exp-score-big" id="expScore">0/100</div>
+    <div class="exp-breakdown" id="expBreakdown"></div>
+    <div id="expMedal"></div>
+    <div class="exp-farewell">🎓 Сау болыңыз! Келесі сабақта кездескенше! 👋</div>
+  </div>
+</div>
+
+<!-- ===== TEACHER SCREEN ===== -->
+<div class="screen" id="teacherScreen">
+  <div style="max-width:1100px;margin:0 auto;padding:20px">
+    <div class="t-header">
+      <div>
+        <h2>👩‍🏫 Мұғалім <span>панелі</span></h2>
+        <div style="color:var(--muted);font-size:.82rem;margin-top:4px">Тербелмелі қозғалыс · 9А сынып · Сейтжаппар Ұлболсын</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="t-refresh" onclick="loadTeacherData()">🔄 Жаңарту</button>
+        <button class="t-logout" onclick="doLogout()">↩ Шығу</button>
+      </div>
+    </div>
+    <div class="t-stats" id="tStats">
+      <div class="stat-c"><div class="stat-n" id="stTotal">0</div><div class="stat-l">Жалпы оқушы</div></div>
+      <div class="stat-c"><div class="stat-n" id="stActive">0</div><div class="stat-l">Белсенді</div></div>
+      <div class="stat-c"><div class="stat-n" id="stAvg">0</div><div class="stat-l">Орташа балл</div></div>
+      <div class="stat-c"><div class="stat-n" id="stFinished">0</div><div class="stat-l">Аяқтаған</div></div>
+    </div>
+    <div class="t-table">
+      <div class="th-row">
+        <div>Оқушы</div><div>Балл</div><div class="hc3">Тест</div>
+        <div class="hc4">Жазбаша</div><div class="hc5">Ойындар</div><div>Рефлексия</div>
+      </div>
+      <div id="studentRows"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let currentUser = null;
+let currentRole = null;
+let timerInterval = null;
+let timerSeconds = 40 * 60;
+let timerRunning = false;
+let scores = {
+  lecture: 0, video: 0,
+  ftest: 0, fwritten: 0,
+  maintest: 0, rocket: 0, match: 0
+};
+let fDone = {};
+let wDone = {};
+let vidDone = {};
+let lectureSaved = false;
+let mainTestScore = 0;
+let mainTestDone = false;
+let rocketScore2 = 0;
+let matchDone = false;
+let matchScore = 0;
+let rocketFinished = false;
+
+// REFLECTION data
+let reflData = {};
+
+function getDB() {
+  try { return JSON.parse(localStorage.getItem('physDB') || '{}'); } catch(e) { return {}; }
+}
+function saveDB(db) {
+  try { localStorage.setItem('physDB', JSON.stringify(db)); } catch(e) {}
+}
+function saveStudent() {
+  if (!currentUser) return;
+  const db = getDB();
+  if (!db.students) db.students = {};
+  const total = getTotalScore();
+  db.students[currentUser] = {
+    name: currentUser,
+    scores, total,
+    fDone, wDone, vidDone,
+    lectureSaved,
+    mainTestScore, mainTestDone,
+    rocketScore: rocketScore2, rocketFinished,
+    matchDone, matchScore,
+    reflection: reflData,
+    timestamp: Date.now(),
+    finished: timerSeconds <= 0
+  };
+  saveDB(db);
+}
+
+function getTotalScore() {
+  let t = 0;
+  for (const k in scores) t += scores[k];
+  return Math.min(t, 100);
+}
+
+function updateTimerUI() {
+  document.getElementById('tScore').textContent = getTotalScore();
+}
+
+// ===== TOAST =====
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color || 'var(--accent3)';
+  t.style.color = color ? '#fff' : '#000';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ===== AUTH =====
+function switchRole(r) {
+  document.getElementById('stuForm').style.display = r === 'student' ? '' : 'none';
+  document.getElementById('tchForm').style.display = r === 'teacher' ? '' : 'none';
+  document.querySelectorAll('.role-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&r==='student')||(i===1&&r==='teacher')));
+  document.getElementById('authErr').textContent = '';
+}
+
+function stuLogin() {
+  const name = document.getElementById('stuName').value.trim();
+  const code = document.getElementById('stuCode').value.trim();
+  if (!name) { document.getElementById('authErr').textContent = '⚠️ Аты-жөнді енгіз!'; return; }
+  if (code !== '9A2025') { document.getElementById('authErr').textContent = '❌ Сынып коды қате!'; return; }
+  currentUser = name;
+  currentRole = 'student';
+  startLesson();
+}
+
+function tchLogin() {
+  const l = document.getElementById('tchLogin').value.trim();
+  const p = document.getElementById('tchPass').value.trim();
+  if (l === 'seitzh' && p === 'fizika2025') {
+    currentRole = 'teacher';
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('teacherScreen').classList.add('active');
+    loadTeacherData();
+  } else {
+    document.getElementById('authErr').textContent = '❌ Логин немесе пароль қате!';
+  }
+}
+
+function doLogout() {
+  currentUser = null; currentRole = null;
+  stopTimer();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('timerBar').style.display = 'none';
+  document.getElementById('mainNav').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('expiredOverlay').style.display = 'none';
+  document.getElementById('reflPopup').style.display = 'none';
+}
+
+// ===== LESSON START =====
+function startLesson() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('lessonScreen').classList.add('active');
+  document.getElementById('timerBar').style.display = 'flex';
+  document.getElementById('mainNav').style.display = 'block';
+  document.getElementById('tUser').textContent = '👤 ' + currentUser;
+  buildTest();
+  initRocket();
+  startTimer();
+  requestAnimationFrame(animLoop);
+}
+
+// ===== TIMER =====
+function startTimer() {
+  timerRunning = true;
+  timerInterval = setInterval(() => {
+    if (!timerRunning) return;
+    timerSeconds--;
+    updateTimerDisplay();
+    if (timerSeconds <= 0) {
+      timerSeconds = 0;
+      clearInterval(timerInterval);
+      timerExpired();
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  timerRunning = false;
+  if (timerInterval) clearInterval(timerInterval);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerSeconds / 60);
+  const s = timerSeconds % 60;
+  const str = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  const el = document.getElementById('tClock');
+  el.textContent = str;
+  const pct = timerSeconds / (40*60) * 100;
+  document.getElementById('tFill').style.width = pct + '%';
+  el.className = 't-clock' + (timerSeconds < 300 ? ' danger' : timerSeconds < 600 ? ' warn' : '');
+  updateTimerUI();
+  if (timerSeconds === 300) showToast('⚠️ 5 минут қалды!', '#f9ca24');
+  if (timerSeconds === 60) showToast('⚠️ 1 минут қалды!', '#ff6b9d');
+}
+
+function timerExpired() {
+  stopTimer();
+  timerRunning = false;
+  saveStudent();
+  // Show reflection popup first
+  document.getElementById('reflPopup').style.display = 'flex';
+}
+
+// ===== REFLECTION POPUP =====
+let rpSelections = {};
+
+function selRP(groupId, btn, val) {
+  document.querySelectorAll('#' + groupId + ' .rp-opt').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  rpSelections[groupId] = val;
+}
+
+function submitReflection() {
+  reflData = {
+    rating: rpSelections['rpRating'] || '',
+    clarity: rpSelections['rpClear'] || '',
+    bestPart: rpSelections['rpBest'] || '',
+    learned: document.getElementById('rpLearned').value,
+    question: document.getElementById('rpQuestion').value,
+    hard: document.getElementById('rpHard').value,
+    selfAssess: rpSelections['rpSelf'] || '',
+    timestamp: Date.now()
+  };
+  document.getElementById('rpDone').style.display = 'block';
+  saveStudent();
+  setTimeout(() => {
+    document.getElementById('reflPopup').style.display = 'none';
+    showExpiredScreen();
+  }, 1800);
+}
+
+// ===== EXPIRED SCREEN =====
+function showExpiredScreen() {
+  const total = getTotalScore();
+  document.getElementById('expiredOverlay').style.display = 'flex';
+  document.getElementById('expScore').textContent = total + '/100';
+
+  const bd = document.getElementById('expBreakdown');
+  bd.innerHTML = `
+    <div class="exp-row"><span>📖 Лекция конспекті</span><span>${scores.lecture}/10</span></div>
+    <div class="exp-row"><span>🎥 Видео</span><span>${scores.video}/5</span></div>
+    <div class="exp-row"><span>📐 Формула тестер</span><span>${scores.ftest}/8</span></div>
+    <div class="exp-row"><span>✍️ Жазбаша есептер</span><span>${scores.fwritten}/12</span></div>
+    <div class="exp-row"><span>🧪 Негізгі тест</span><span>${scores.maintest}/30</span></div>
+    <div class="exp-row"><span>🚀 Ракета ойыны</span><span>${scores.rocket}/15</span></div>
+    <div class="exp-row"><span>🔗 Сәйкестендіру</span><span>${scores.match}/10</span></div>
+    <div class="exp-row" style="font-weight:900;border:none;font-size:.95rem"><span>⭐ ЖАЛПЫ</span><span style="color:var(--accent4);font-size:1.1rem">${total}/100</span></div>
+  `;
+
+  const medalEl = document.getElementById('expMedal');
+  const gameScore = scores.rocket + scores.match;
+  if (total >= 85) {
+    medalEl.innerHTML = `
+      <div style="font-size:2.5rem;margin-bottom:8px">🏆🥇⭐</div>
+      <div class="exp-congrats">
+        <strong>КЕРЕМЕТ! Жарайсың!</strong><br>
+        Бүгінгі сабақты толық меңгергеніңді тапсырмаларды, есептерді және ойындарды орындау арқылы дәлелдедің!<br>
+        Ракета + Сәйкестендіру: <strong>${gameScore}/25 балл</strong> — Тамаша нәтиже! 🚀🔗
+      </div>`;
+  } else if (total >= 60) {
+    medalEl.innerHTML = `
+      <div style="font-size:2.5rem;margin-bottom:8px">🥈</div>
+      <div class="exp-congrats" style="background:rgba(249,202,36,.1);border-color:rgba(249,202,36,.3);color:var(--accent4)">
+        <strong>Жақсы нәтиже!</strong><br>Материалды жартылай меңгердің. Үй тапсырмасын орындап, білімді тереңдет!
+      </div>`;
+  } else {
+    medalEl.innerHTML = `
+      <div style="font-size:2.5rem;margin-bottom:8px">📚</div>
+      <div class="exp-low">
+        Балл жинауды жалғастыруың керек. Материалды қайталап оқы және есептерді орында!
+      </div>
+      <div style="margin-top:12px">
+        <div class="r-stats" style="justify-content:center">
+          <div class="r-pill">🚀 Ракетада жалғастыр!</div>
+        </div>
+      </div>`;
+  }
+}
+
+// ===== LECTURE =====
+function saveLecture() {
+  const text = document.getElementById('lectureNote').value.trim();
+  if (text.length < 30) { showToast('⚠️ Кем дегенде 30 таңба жаз!', '#ff6b9d'); return; }
+  if (lectureSaved) { showToast('✅ Бұрын сақтаған!'); return; }
+  lectureSaved = true;
+  scores.lecture = 10;
+  document.getElementById('lecSaved').style.display = 'inline';
+  updateTimerUI();
+  saveStudent();
+  showToast('✅ Конспект сақталды! +10 балл');
+}
+
+// ===== VIDEO =====
+function vidWatch(id, pts) {
+  if (vidDone[id]) return;
+  vidDone[id] = true;
+  scores.video += pts;
+  updateTimerUI();
+  saveStudent();
+  showToast('🎥 Видео белгіленді! +' + pts + ' балл');
+}
+
+// ===== FORMULA TEST =====
+function checkFQ(id, btn, correct) {
+  if (fDone[id]) return;
+  fDone[id] = true;
+  const opts = btn.closest('.q-opts-f').querySelectorAll('.q-opt-f');
+  opts.forEach(o => o.disabled = true);
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) opts[0].classList.contains('correct') || opts.forEach(o => { if(o.textContent.includes('✓')) o.classList.add('correct'); });
+  const fb = document.getElementById(id + 'fb');
+  if (correct) {
+    fb.className = 'f-feedback show ok'; fb.textContent = '✅ Дұрыс! +2 балл';
+    scores.ftest += 2; updateTimerUI(); saveStudent();
+    showToast('✅ Дұрыс! +2 балл');
+  } else {
+    fb.className = 'f-feedback show fail'; fb.textContent = '❌ Қате. Дұрыс жауапты тауып алдың?';
+  }
+}
+
+// ===== WRITTEN =====
+function checkW(inpId, fbId, answers) {
+  if (wDone[inpId]) { showToast('⚠️ Бұрын тексерген!', '#f9ca24'); return; }
+  const val = document.getElementById(inpId).value.trim().toLowerCase().replace(/\s/g,'');
+  const fb = document.getElementById(fbId);
+  const ans = answers.split(',');
+  let ok = ans.some(a => val.includes(a.toLowerCase().replace(/\s/g,'')));
+  wDone[inpId] = true;
+  if (ok) {
+    fb.className = 'w-fb ok'; fb.textContent = '✅ Дұрыс! +3 балл — Жарайсың!';
+    scores.fwritten += 3; updateTimerUI(); saveStudent();
+    showToast('✅ Жазбаша дұрыс! +3 балл');
+  } else if (val.length > 10) {
+    fb.className = 'w-fb partial'; fb.textContent = '⚠️ Жауабыңда қате бар. Қайта тексер. Мұғалім тексереді.';
+    saveStudent();
+  } else {
+    fb.className = 'w-fb fail'; fb.textContent = '❌ Жауап тым қысқа. Шешімді толық жаз.';
+  }
+}
+
+// ===== MAIN TEST =====
+const testQs = [
+  {q:'Тербелмелі қозғалыс дегеніміз не?',opts:['Бір бағытта жүретін қозғалыс','Тепе-теңдікке қайталап оралатын қозғалыс','Тек жоғарыға бағытталған қозғалыс','Жылдамдығы тұрақты қозғалыс'],ans:1,exp:'Тербелмелі қозғалыс — тепе-теңдік жағдайына мерзімді қайта оралатын қозғалыс.'},
+  {q:'Амплитуда не сипаттайды?',opts:['Тербеліс санын','Ең үлкен ауытқуды','Тербеліс уақытын','Жиілікті'],ans:1,exp:'Амплитуда — тепе-теңдіктен ең үлкен ауытқу.'},
+  {q:'T = 0,5 с болса, ν = ?',opts:['0,5 Гц','1 Гц','2 Гц','5 Гц'],ans:2,exp:'ν = 1/T = 1/0,5 = 2 Гц.'},
+  {q:'Маятник периоды нені байланысты?',opts:['Массасына','Амплитудасына','Ұзындығына','Материалына'],ans:2,exp:'T = 2π√(L/g) — тек ұзындыққа және g-ге байланысты.'},
+  {q:'Серіппелі маятник периоды формуласы?',opts:['T = 2π√(L/g)','T = 2π√(m/k)','T = 2π√(k/m)','T = mg/k'],ans:1,exp:'T = 2π√(m/k), мұнда m — масса, k — қатаңдық.'},
+  {q:'Өшпелі тербеліс деп нені атаймыз?',opts:['Жиілігі өсетін тербеліс','Периоды тұрақты тербеліс','Амплитудасы кемитін тербеліс','Тез жүретін тербеліс'],ans:2,exp:'Өшпелі тербеліс — үйкеліс күші әсерінен амплитудасы кемитін тербеліс.'},
+  {q:'ω = 2π/T. T = 1 с болса, ω = ?',opts:['1 рад/с','π рад/с','2π рад/с','4π рад/с'],ans:2,exp:'ω = 2π/1 = 2π ≈ 6,28 рад/с.'},
+  {q:'Маятник ұзындығы 4 есе өссе, T қалай?',opts:['4 есе өседі','2 есе өседі','Өзгермейді','2 есе кемиді'],ans:1,exp:'T ~ √L, L 4 есе өссе, √L 2 есе өседі.'},
+  {q:'1 минутта 60 тербеліс — жиілік?',opts:['60 Гц','0,5 Гц','1 Гц','30 Гц'],ans:2,exp:'ν = 60/60 = 1 Гц.'},
+  {q:'Еркін тербеліс дегеніміз не?',opts:['Сыртқы күш әсерімен жүретін','Тек серпімдік күш әсерімен жүретін','Өшпелі тербеліс','Жиілігі өзгеретін'],ans:1,exp:'Еркін тербеліс — сыртқы күш болмай, тек серпімдік/гравитациялық күш әсерімен жүреді.'}
+];
+
+let testQ = 0, testScoreTemp = 0;
+
+function buildTest() {
+  const c = document.getElementById('testContainer');
+  c.innerHTML = '';
+  testQs.forEach((q,qi) => {
+    const d = document.createElement('div');
+    d.className = 'test-card' + (qi===0?' active':'');
+    d.id = 'tq'+qi;
+    d.innerHTML = `<div class="q-num">Сұрақ ${qi+1}/${testQs.length} · 3 балл</div>
+      <div class="q-text">${q.q}</div>
+      <div class="q-options">
+        ${q.opts.map((o,i)=>`<button class="q-option" onclick="pickT(${qi},${i})">
+          <div class="opt-ltr">${['A','B','C','D'][i]}</div>${o}</button>`).join('')}
+      </div>
+      <div class="q-fb" id="tfb${qi}"></div>
+      <button class="next-btn" id="tnx${qi}" onclick="nextT(${qi})">${qi<testQs.length-1?'Келесі ➜':'Нәтиже 🏆'}</button>`;
+    c.appendChild(d);
+  });
+}
+
+function pickT(qi, oi) {
+  const q = testQs[qi];
+  const opts = document.getElementById('tq'+qi).querySelectorAll('.q-option');
+  opts.forEach(o => { o.classList.add('disabled'); o.onclick=null; });
+  opts[oi].classList.add(oi===q.ans?'correct':'wrong');
+  if(oi!==q.ans) opts[q.ans].classList.add('correct');
+  const fb = document.getElementById('tfb'+qi);
+  const ok = oi===q.ans;
+  fb.className='q-fb show '+(ok?'ok':'fail');
+  fb.textContent=(ok?'✅ Дұрыс! +3 балл. ':'❌ Қате. Дұрыс: '+q.opts[q.ans]+'. ')+q.exp;
+  if(ok){testScoreTemp+=3; showToast('✅ Дұрыс! +3 балл');}
+  document.getElementById('tnx'+qi).style.display='block';
+  document.getElementById('testFill').style.width=((qi+1)/testQs.length*100)+'%';
+}
+
+function nextT(qi) {
+  document.getElementById('tq'+qi).classList.remove('active');
+  if(qi+1<testQs.length){
+    document.getElementById('tq'+(qi+1)).classList.add('active');
+  } else {
+    mainTestScore = testScoreTemp;
+    scores.maintest = mainTestScore;
+    mainTestDone = true;
+    updateTimerUI(); saveStudent();
+    const pct=mainTestScore/30;
+    let em='😔',msg='Қайта оқу керек!';
+    if(pct>=0.9){em='🏆';msg='Керемет нәтиже!';}
+    else if(pct>=0.7){em='🌟';msg='Жақсы нәтиже!';}
+    else if(pct>=0.5){em='📚';msg='Орташа. Тағы жаттық!';}
+    document.getElementById('testDone').style.display='block';
+    document.getElementById('testDone').innerHTML=`<div style="text-align:center;padding:16px">
+      <div style="font-size:3rem">${em}</div>
+      <div style="font-size:2rem;font-weight:900;color:var(--accent);margin:8px 0">${mainTestScore}/30</div>
+      <div style="color:var(--muted)">${msg}</div>
+    </div>`;
+    showToast('🧪 Тест аяқталды! '+mainTestScore+'/30');
+  }
+}
+
+// ===== REFLECTION - ROCKET =====
+const rqs = [
+  {q:'Тербеліс периодының бірлігі?',opts:['Гц','метр','секунд','рад/с'],ans:2},
+  {q:'Жиіліктің бірлігі?',opts:['секунд','Гц','метр','Дж'],ans:1},
+  {q:'T = 0,25 с болса, ν = ?',opts:['0,25 Гц','2 Гц','4 Гц','8 Гц'],ans:2},
+  {q:'Маятник массасы 2 есе өссе, T қалай?',opts:['2 есе өседі','Өзгермейді','2 есе кемиді','4 есе өседі'],ans:1},
+  {q:'ω = 2π/T. T = 1 с болса, ω = ?',opts:['1 рад/с','π рад/с','2π рад/с','4π рад/с'],ans:2},
+  {q:'Серіппе қатаңдығы өссе, T қалай?',opts:['Өседі','Кемиді','Өзгермейді','2 есе өседі'],ans:1},
+  {q:'Еркін тербелісте қандай күш жұмыс жасайды?',opts:['Сыртқы күш','Серпімдік күш ғана','Магнит күші','Ядролық күш'],ans:1},
+  {q:'T = 2 с болса, 10 секундта неше тербеліс?',opts:['2','5','10','20'],ans:1},
+  {q:'Амплитуда өссе, маятник периоды?',opts:['Өседі','Кемиді','Өзгермейді','Екі есе өседі'],ans:2},
+  {q:'Дыбыс жиілігі 440 Гц болса, периоды?',opts:['0,001 с','0,0023 с','0,01 с','1 с'],ans:1}
+];
+let rqIdx=0, rLives=3, rScore=0, rInited=false;
+
+function initRocket(){
+  rqIdx=0; rLives=3; rScore=0; rInited=true;
+  renderRQ();
+}
+function renderRQ(){
+  const area=document.getElementById('rArea');
+  if(rqIdx>=rqs.length||rLives<=0){
+    rocketFinished=true;
+    scores.rocket=rScore;
+    updateTimerUI(); saveStudent();
+    const h='❤️'.repeat(Math.max(0,rLives))+'🖤'.repeat(Math.max(0,3-rLives));
+    area.innerHTML=`<div style="text-align:center;padding:20px">
+      <div style="font-size:3rem">${rLives>0?'🚀':'💥'}</div>
+      <div style="font-size:1.4rem;font-weight:900;margin:10px 0">${rScore} балл!</div>
+      <div style="color:var(--muted);margin-bottom:16px">${h}</div>
+      <button class="ctrl-btn" onclick="initRocket()">🔄 Қайта ойна</button>
+    </div>`;
+    return;
+  }
+  const q=rqs[rqIdx];
+  document.getElementById('rl').textContent=rqIdx+1;
+  document.getElementById('rs').textContent=rScore;
+  const h='❤️'.repeat(rLives)+'🖤'.repeat(3-rLives);
+  document.getElementById('rlv').textContent=h;
+  document.getElementById('rpf').style.width=(rqIdx/rqs.length*100)+'%';
+  area.innerHTML=`<div class="r-q">${q.q}</div>
+    <div class="r-opts">${q.opts.map((o,i)=>`<button class="r-opt" onclick="ansR(${i})">${['A','B','C','D'][i]}. ${o}</button>`).join('')}</div>
+    <div class="r-fb" id="rfb"></div>`;
+}
+function ansR(i){
+  const q=rqs[rqIdx];
+  const btns=document.getElementById('rArea').querySelectorAll('.r-opt');
+  btns.forEach(b=>b.disabled=true);
+  const fb=document.getElementById('rfb');
+  if(i===q.ans){
+    rScore+=Math.ceil(15/rqs.length);
+    btns[i].classList.add('correct');
+    fb.style.color='var(--accent3)';fb.textContent='✅ Дұрыс! +1,5 балл';
+    showToast('✅ Дұрыс! 🚀');
+  }else{
+    rLives--;
+    btns[i].classList.add('wrong');btns[q.ans].classList.add('correct');
+    fb.style.color='var(--accent2)';fb.textContent='❌ Қате! Дұрыс: '+q.opts[q.ans];
+    document.getElementById('rlv').textContent='❤️'.repeat(Math.max(0,rLives))+'🖤'.repeat(Math.max(0,3-rLives));
+  }
+  rqIdx++;
+  setTimeout(renderRQ,1400);
+}
+
+// ===== MATCH GAME =====
+let mSelType=null,mSelIdx=null,mMatched=0;
+const mPairs={0:0,1:1,2:2,3:3,4:4};
+
+function pickM(type,idx){
+  const id=(type==='t'?'mt':'md')+idx;
+  const el=document.getElementById(id);
+  if(el.classList.contains('matched'))return;
+  if(type==='t'){
+    if(mSelType==='t'&&mSelIdx!==null)document.getElementById('mt'+mSelIdx).classList.remove('sel');
+    mSelType='t';mSelIdx=idx;el.classList.add('sel');
+  }else{
+    if(mSelType==='d'&&mSelIdx!==null)document.getElementById('md'+mSelIdx).classList.remove('sel');
+    mSelType='d';mSelIdx=idx;el.classList.add('sel');
+  }
+  // check if we have both
+  const tEl=document.querySelector('.match-item.sel[id^="mt"]');
+  const dEl=document.querySelector('.match-item.sel[id^="md"]');
+  if(tEl&&dEl){
+    const ti=parseInt(tEl.id.replace('mt',''));
+    const di=parseInt(dEl.id.replace('md',''));
+    if(mPairs[ti]===di){
+      tEl.classList.remove('sel');tEl.classList.add('matched');
+      dEl.classList.remove('sel');dEl.classList.add('matched');
+      mMatched++;
+      showToast('✅ Дұрыс сәйкестік! 🔗');
+      if(mMatched===5&&!matchDone){
+        matchDone=true;matchScore=10;
+        scores.match=10;updateTimerUI();saveStudent();
+        document.getElementById('matchRes').innerHTML='<span style="color:var(--accent3)">🎉 Барлығын дұрыс сәйкестендірдің! +10 балл!</span>';
+        showToast('🏆 Барлығы дұрыс! +10 балл');
+      }
+    }else{
+      tEl.classList.add('wrong');dEl.classList.add('wrong');
+      setTimeout(()=>{tEl.classList.remove('sel','wrong');dEl.classList.remove('sel','wrong');},600);
+    }
+    mSelType=null;mSelIdx=null;
+  }
+}
+function resetM(){
+  mMatched=0;mSelType=null;mSelIdx=null;
+  document.querySelectorAll('.match-item').forEach(el=>el.className='match-item');
+  document.getElementById('matchRes').innerHTML='';
+}
+
+// ===== REFL TABS =====
+function switchRefl(i){
+  document.querySelectorAll('.refl-tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.refl-panel').forEach((p,j)=>p.classList.toggle('active',i===j));
+}
+
+// ===== ANIMATIONS =====
+const g=9.8;
+let pRunning=true,sRunning=true,dampOn=false;
+let pT=0,sT=0,dampF=0;
+const hist=[];
+
+const pC=document.getElementById('pCanvas'),pX=pC.getContext('2d');
+const sC=document.getElementById('sCanvas'),sX=sC.getContext('2d');
+const gC=document.getElementById('gCanvas'),gX=gC.getContext('2d');
+
+function toggleP(){pRunning=!pRunning;document.getElementById('pPlayBtn').textContent=pRunning?'⏸ Тоқтату':'▶️ Жүргізу';}
+function toggleS(){sRunning=!sRunning;document.getElementById('sPlayBtn').textContent=sRunning?'⏸ Тоқтату':'▶️ Жүргізу';}
+function toggleDamp(){dampOn=!dampOn;dampF=0;const b=document.getElementById('dampBtn');b.classList.toggle('on',dampOn);b.textContent=dampOn?'✅ Өшпелі':'📉 Өшпелі';}
+
+function drawPend(t){
+  const W=pC.width,H=pC.height,cx=W/2,cy=35;
+  pX.clearRect(0,0,W,H);
+  const L=parseInt(document.getElementById('pLen').value)*1.15;
+  const A=parseInt(document.getElementById('pAmp').value)*Math.PI/180;
+  const om=Math.sqrt(g/(L/120));
+  const th=A*Math.cos(om*t);
+  const bx=cx+L*Math.sin(th),by=cy+L*Math.cos(th);
+  pX.fillStyle='#5b8cff';pX.beginPath();pX.arc(cx,cy,5,0,Math.PI*2);pX.fill();
+  pX.strokeStyle='#8892b0';pX.lineWidth=2;pX.beginPath();pX.moveTo(cx,cy);pX.lineTo(bx,by);pX.stroke();
+  const gr=pX.createRadialGradient(bx-4,by-4,2,bx,by,18);gr.addColorStop(0,'#a0c4ff');gr.addColorStop(1,'#5b8cff');
+  pX.fillStyle=gr;pX.beginPath();pX.arc(bx,by,18,0,Math.PI*2);pX.fill();
+  pX.fillStyle='rgba(91,140,255,.15)';pX.beginPath();pX.arc(bx,by,24,0,Math.PI*2);pX.fill();
+  pX.fillStyle='#8892b0';pX.font='11px Nunito';
+  const Tv=(2*Math.PI*Math.sqrt((L/120)/g)).toFixed(2);
+  pX.fillText('T ≈ '+Tv+' с',8,H-8);
+}
+
+function drawSpring(t){
+  const W=sC.width,H=sC.height,cx=W/2;
+  sX.clearRect(0,0,W,H);
+  const m=parseFloat(document.getElementById('sMass').value),k=parseInt(document.getElementById('sK').value);
+  const om=Math.sqrt(k/m);
+  if(dampOn)dampF+=0.0003;
+  const dec=dampOn?Math.exp(-dampF*t*0.5):1;
+  const y0=75,amp=55;
+  const y=y0+amp*dec*Math.cos(om*t*0.5);
+  sX.fillStyle='#2a3060';sX.fillRect(cx-25,8,50,10);
+  const coils=8,stopT=18,stopB=y-18,coilH=(stopB-stopT)/coils;
+  sX.strokeStyle='#ff6b9d';sX.lineWidth=2;sX.beginPath();sX.moveTo(cx,stopT);
+  for(let i=0;i<coils;i++){const yy=stopT+coilH*i;sX.lineTo(cx+(i%2===0?10:-10),yy+coilH/2);sX.lineTo(cx,yy+coilH);}
+  sX.stroke();
+  const ms=18+m*4;
+  const gr=sX.createRadialGradient(cx,y,2,cx,y,ms);gr.addColorStop(0,'#ffb3c6');gr.addColorStop(1,'#ff6b9d');
+  sX.fillStyle=gr;sX.beginPath();sX.arc(cx,y,ms,0,Math.PI*2);sX.fill();
+  sX.fillStyle='#8892b0';sX.font='11px Nunito';
+  const Tv=(2*Math.PI*Math.sqrt(m/k)).toFixed(2);sX.fillText('T ≈ '+Tv+' с',8,H-8);
+  return dec*Math.cos(om*t*0.5);
+}
+
+function drawGraph(xn){
+  const W=gC.width,H=gC.height;
+  hist.push(xn);if(hist.length>W)hist.shift();
+  gX.clearRect(0,0,W,H);
+  gX.strokeStyle='#1a1e35';gX.lineWidth=1;
+  for(let y=0;y<=H;y+=H/4){gX.beginPath();gX.moveTo(0,y);gX.lineTo(W,y);gX.stroke();}
+  gX.strokeStyle='#2a3060';gX.lineWidth=1;gX.beginPath();gX.moveTo(0,H/2);gX.lineTo(W,H/2);gX.stroke();
+  gX.strokeStyle='#43e97b';gX.lineWidth=2;gX.beginPath();
+  for(let i=0;i<hist.length;i++){const x=i,y=H/2-hist[i]*(H/2-8);i===0?gX.moveTo(x,y):gX.lineTo(x,y);}
+  gX.stroke();
+}
+
+let lastT=null;
+function animLoop(ts){
+  if(!lastT)lastT=ts;
+  const dt=Math.min((ts-lastT)/1000,.05);lastT=ts;
+  if(pRunning)pT+=dt;
+  if(sRunning)sT+=dt;
+  drawPend(pT);
+  const xn=drawSpring(sT);
+  drawGraph(xn);
+  requestAnimationFrame(animLoop);
+}
+
+// ===== TEACHER PANEL =====
+function loadTeacherData(){
+  const db=getDB();
+  const students=db.students||{};
+  const keys=Object.keys(students);
+  document.getElementById('stTotal').textContent=keys.length;
+  const finished=keys.filter(k=>students[k].finished);
+  document.getElementById('stFinished').textContent=finished.length;
+  const active=keys.filter(k=>!students[k].finished);
+  document.getElementById('stActive').textContent=active.length;
+  const avg=keys.length?Math.round(keys.reduce((s,k)=>s+(students[k].total||0),0)/keys.length):0;
+  document.getElementById('stAvg').textContent=avg;
+
+  const rows=document.getElementById('studentRows');
+  rows.innerHTML='';
+  if(!keys.length){rows.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted)">Оқушылар жоқ</div>';return;}
+
+  keys.sort((a,b)=>(students[b].total||0)-(students[a].total||0));
+  keys.forEach((k,idx)=>{
+    const s=students[k];
+    const t=s.total||0;
+    const sc=t>=70?'s-hi':t>=50?'s-mid':'s-lo';
+    const refl=s.reflection&&s.reflection.rating?'✅':'—';
+    const row=document.createElement('div');
+    row.innerHTML=`<div class="td-row">
+      <div class="name">👤 ${s.name}</div>
+      <div class="${sc}">${t}/100</div>
+      <div class="tc3">${s.mainTestScore||0}/30</div>
+      <div class="tc4">${(s.scores&&s.scores.fwritten)||0}/12</div>
+      <div class="tc5">${(s.scores&&s.scores.rocket)||0}+${(s.scores&&s.scores.match)||0}</div>
+      <div><span class="${s.reflection&&s.reflection.rating?'ok-tag':'err-tag'}">${refl}</span>
+        <button class="exp-btn" onclick="toggleDet('det${idx}')">▼ Толығырақ</button></div>
+    </div>
+    <div class="stu-detail" id="det${idx}">
+      <div class="det-grid">
+        <div class="det-card"><h5>📊 Балл бөлінісі</h5>
+          <p>📖 Лекция: <span class="${(s.scores&&s.scores.lecture)>=10?'ok-tag':'err-tag'}">${(s.scores&&s.scores.lecture)||0}/10</span><br>
+          🎥 Видео: <span class="${(s.scores&&s.scores.video)>=3?'ok-tag':'err-tag'}">${(s.scores&&s.scores.video)||0}/5</span><br>
+          📐 Формула тест: <span class="${(s.scores&&s.scores.ftest)>=6?'ok-tag':'err-tag'}">${(s.scores&&s.scores.ftest)||0}/8</span><br>
+          ✍️ Жазбаша: <span class="${(s.scores&&s.scores.fwritten)>=9?'ok-tag':'err-tag'}">${(s.scores&&s.scores.fwritten)||0}/12</span><br>
+          🧪 Тест: <span class="${(s.mainTestScore||0)>=21?'ok-tag':'err-tag'}">${s.mainTestScore||0}/30</span><br>
+          🚀 Ракета: <span class="${(s.scores&&s.scores.rocket)>=10?'ok-tag':'err-tag'}">${(s.scores&&s.scores.rocket)||0}/15</span><br>
+          🔗 Сәйкестендіру: <span class="${(s.scores&&s.scores.match)>=10?'ok-tag':'err-tag'}">${(s.scores&&s.scores.match)||0}/10</span></p>
+        </div>
+        ${s.reflection&&s.reflection.rating?`
+        <div class="det-card"><h5>💭 Рефлексия нәтижесі</h5>
+          <p>⭐ Сабақ: <span class="refl-tag">${s.reflection.rating}</span><br>
+          📚 Түсіндік: <span class="refl-tag">${s.reflection.clarity}</span><br>
+          💡 Ең жақсы бөлім: <span class="refl-tag">${s.reflection.bestPart}</span><br>
+          🎯 Өзін-өзі бағалау: <span class="refl-tag">${s.reflection.selfAssess}</span></p>
+        </div>
+        <div class="det-card"><h5>✍️ Оқушы жауаптары</h5>
+          <p><strong style="color:var(--accent)">Үйрендім:</strong></p><div class="ans">${s.reflection.learned||'—'}</div>
+          <p style="margin-top:8px"><strong style="color:var(--accent2)">Жауапсыз сұрағым:</strong></p><div class="ans">${s.reflection.question||'—'}</div>
+          <p style="margin-top:8px"><strong style="color:var(--accent4)">Маған қиын болды:</strong></p><div class="ans">${s.reflection.hard||'—'}</div>
+        </div>`:'<div class="det-card"><h5>💭 Рефлексия</h5><p style="color:var(--accent2)">Рефлексия әлі толтырылмаған</p></div>'}
+        <div class="det-card"><h5>⚠️ Жіберген қателер</h5>
+          <p>${buildErrors(s)}</p>
+        </div>
+      </div>
+    </div>`;
+    rows.appendChild(row);
+  });
+}
+
+function buildErrors(s){
+  const errs=[];
+  if(!s.lectureSaved)errs.push('<span class="err-tag">Конспект жазбаған</span>');
+  if((s.scores&&s.scores.video)<5)errs.push('<span class="err-tag">Барлық видеоны көрмеген</span>');
+  if((s.scores&&s.scores.ftest)<8)errs.push('<span class="err-tag">Формула тестте қате бар</span>');
+  if((s.scores&&s.scores.fwritten)<12)errs.push('<span class="err-tag">Жазбаша есептер толық емес</span>');
+  if((s.mainTestScore||0)<21)errs.push('<span class="err-tag">Тест 70%-дан төмен</span>');
+  if(!(s.rocketFinished))errs.push('<span class="err-tag">Ракета ойынын аяқтамаған</span>');
+  if(!(s.matchDone))errs.push('<span class="err-tag">Сәйкестендіруді орындамаған</span>');
+  if(!(s.reflection&&s.reflection.rating))errs.push('<span class="err-tag">Рефлексия жазбаған</span>');
+  return errs.length?errs.join('<br>'):'<span class="ok-tag">Барлық тапсырманы орындаған!</span>';
+}
+
+function toggleDet(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+// NAV HIGHLIGHT
+const sections2=document.querySelectorAll('section[id]');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections2.forEach(s=>{if(window.scrollY>=s.offsetTop-60)cur=s.id;});
+  document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur));
+});
+</script>
+</body>
+</html>
